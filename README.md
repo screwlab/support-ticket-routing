@@ -51,26 +51,6 @@ Thirteen nodes: Webhook → Validate and Mask PII → Valid Ticket? → Deduplic
 
 **Model outage (429 / 5xx).** The HTTP node's own *Retry On Fail* (3 tries, 1 s apart) rides out a short outage. If the error persists, the node's error output feeds `Parse Classification`, which answers `202 needs_review` with `reason: model_unavailable`; a malformed reply (not JSON, unknown severity, empty summary) ends the same way with `invalid_classification`. The ticket is never dropped and the caller never sees a 5xx; in production that branch would also enqueue the ticket for a human.
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant N as n8n
-    participant M as DeepSeek
-    C->>N: POST /webhook/support-ticket
-    N->>N: validate, mask PII, dedupe
-    N->>M: chat/completions (sanitized_message only)
-    M-->>N: 429 / 5xx
-    Note over N,M: Retry On Fail: up to 3 tries, 1 s apart
-    N->>M: retry
-    alt model recovered
-        M-->>N: 200 {severity, summary}
-        N-->>C: 202 accepted (Asana + Slack, or HubSpot)
-    else still failing after 3 tries
-        M-->>N: 429 / 5xx
-        N-->>C: 202 needs_review (model_unavailable)
-    end
-```
-
 ### Run it
 
 ```bash
