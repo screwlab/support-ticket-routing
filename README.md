@@ -22,14 +22,14 @@ Offline, no Docker or keys: the Node tests check the workflow export and replay 
 `POST /webhook/support-ticket` accepts `{ticket_id, customer_email, message, tier}`.
 
 ```mermaid
-flowchart LR
+flowchart TD
     A[Webhook] --> B[Validate and mask PII]
     B --> C{Valid?}
     C -->|No| X[400 invalid_request]
     C -->|Yes| D{Seen ticket_id?}
     D -->|Yes| Y[200 duplicate]
-    D -->|No| E[DeepSeek classify<br/>3 tries, 1 s apart]
-    E -->|Still failing,<br/>or malformed reply| M[202 needs_review]
+    D -->|No| E["DeepSeek classify<br>3 tries, 1 s apart"]
+    E -->|error or bad reply| M[202 needs_review]
     E -->|severity + summary| F{Enterprise and Critical?}
     F -->|Yes| G[Asana task + Slack alert]
     F -->|No| H[HubSpot ticket]
