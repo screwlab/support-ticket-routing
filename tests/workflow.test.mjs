@@ -156,8 +156,8 @@ test('classify: the request carries only the masked message and asks DeepSeek fo
   const body = JSON.parse(expression(classify.parameters.jsonBody, { sanitized_message: 'masked text', customer_email: 'x@y.z', ticket_id: 'TK-1' }));
   assert.equal(body.model, 'deepseek-flash');
   assert.deepEqual(body.response_format, { type: 'json_object' });
-  assert.equal(body.max_tokens, 256);
-  assert.match(body.messages[0].content, /Low, Medium, High, or Critical/);
+  assert.equal(body.max_tokens, 120);
+  assert.match(body.messages[0].content, /Low\|Medium\|High\|Critical/);
   assert.equal(body.messages[1].content, 'masked text');
   assert.doesNotMatch(JSON.stringify(body), /x@y\.z|TK-1/);
 });

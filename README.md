@@ -43,7 +43,9 @@ Thirteen nodes: Webhook → Validate and Mask PII → Valid Ticket? → Deduplic
 
 **Duplicates.** `ticket_id` is the idempotency key. `Deduplicate Ticket` records each id in the workflow's static data (kept by n8n in its database, 7-day TTL) before classification, so a repeated webhook answers `200 duplicate` with no second model call, task, or alert. Single instance by nature; in production, claim the id in a database with a unique constraint.
 
-**Classification.** An HTTP Request node sends only `sanitized_message` to DeepSeek (`deepseek-flash`, `response_format: json_object`, `max_tokens: 256`) and asks for `severity` in `Low | Medium | High | Critical` plus a short `summary`. `Parse Classification` re-validates the JSON and the enum before anything acts on it.
+**Classification.** An HTTP Request node sends only `sanitized_message` to DeepSeek (`deepseek-flash`, `response_format: json_object`, thinking off, `max_tokens: 120`) with a ~65-token system prompt asking for `severity` in `Low | Medium | High | Critical` plus a one-sentence `summary`. `Parse Classification` re-validates the JSON and the enum before anything acts on it.
+
+**Cost.** One model call per ticket; duplicates and invalid requests never reach the model. Measured on the sample ticket: 95 prompt + 22 completion tokens. At `deepseek-flash` list prices ($0.30 input / $1.20 output per 1M tokens at peak, half that off-peak) that is ≈ $0.00006 per ticket — about $0.06 per 1,000 tickets, $6 per 100,000. Nothing else in the workflow is metered.
 
 **Branching.** `tier == "Enterprise"` and `severity == "Critical"` → Asana + Slack mocks; everything else → HubSpot mock. The mocks build the payloads (`simulated: true`) and call nothing.
 
